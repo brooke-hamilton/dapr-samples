@@ -1,0 +1,115 @@
+# This file defines containers required by the development containers. These containers must be running
+# to enable the development containers to communicate with Redis, Zipkin, and the Dapr placement container.
+# Notes:
+# - The docker defined network is required so that the containers can use DNS names to communicate because Docker
+#   DNS is enabled only on defined networks. All containers in this example must run on the same Docker network.
+# - DNS name lookups in Docker Compose work for the service names and container names. Service name, hostname, and
+#   container name have been set to the same values to avoid confusion, but the host name and container name are not required.
+# - The placement container is not required because the demo code does not use actors, but it is here to show how placement could be configured. 
+# 
+# To start these containers on your host machine:
+# 1. Ensure that your host machine has docker-compose installed.
+# 2. Open a terminal window and navigate to the folder containing this file.
+# 3. Run this command: docker-compose up
+version: '3.8'
+services:
+  redis-dev:
+    image: "redis"
+    hostname: redis-dev
+    container_name: redis-dev
+    ports:
+      - "6379:6379"
+    networks:
+      - dapr-dev-sidecar
+
+  zipkin-dev:
+    image: "openzipkin/zipkin"
+    hostname: zipkin-dev
+    container_name: zipkin-dev
+    ports:
+      - "9411:9411"
+    networks:
+      - dapr-dev-sidecar
+
+  dapr-placement-dev:
+    image: "daprio/dapr"
+    hostname: dapr-placement-dev
+    container_name: dapr-placement-dev
+    entrypoint: "./placement"
+    command: ["-port", "50006"]
+    networks:
+      - dapr-dev-sidecar
+
+  node-dev:
+    build: 
+      context: ./node/.devcontainer
+    image: node-dev:latest
+    hostname: node-dev
+    container_name: node-dev
+    command: ["/bin/sh", "-c", "echo Container started ; trap \"exit 0\" 15; while sleep 1 & wait $$!; do :; done"]
+    volumes:
+      # Mount the root folder containing the git repo. 
+      # Make sure the 'workspaceFolder' setting in devcontainer.json is a valid path within this folder.
+      - ../../../:/workspace:cached
+    networks:
+      - dapr-dev-sidecar
+
+  dapr-nodeapp-dev:
+    image: "daprio/daprd"
+    container_name: dapr-nodeapp-dev
+    entrypoint: "./daprd"
+    command: 
+     [
+            "-app-id", "nodeapp",
+            "-app-port", "3000",
+            "-placement-host-address", "dapr-placement-dev:50006",
+            "-components-path", "/banana/components",
+            "-config", "/banana/config.yml"
+     ]
+    volumes:
+      - ./utils/.dapr:/banana
+    network_mode: "service:node-dev"
+    depends_on:
+      - node-dev
+
+  python-dev:
+    build: 
+      context: ./python/.devcontainer
+    image: python-dev:latest
+    hostname: python-dev
+    container_name: python-dev
+    command: ["/bin/sh", "-c", "echo Container started ; trap \"exit 0\" 15; while sleep 1 & wait $$!; do :; done"]
+    volumes:
+      # Mount the root folder containing the git repo. 
+      # Make sure the 'workspaceFolder' setting in devcontainer.json is a valid path within this folder.
+      - ../../../:/workspace:cached
+    networks:
+      - dapr-dev-sidecar
+
+  dapr-python-dev:
+    image: "daprio/daprd"
+    container_name: dapr-python-dev
+    restart: on-failure
+    entrypoint: "./daprd"
+    command: 
+     [
+            "-app-id", "pythonapp",
+            "-placement-host-address", "dapr-placement-dev:50006",
+            "-components-path", "/banana/components",
+            "-config", "/banana/config.yml"
+     ]
+    volumes:
+      - ./utils/.dapr:/banana
+    network_mode: "service:python-dev"
+    depends_on: 
+      - python-dev
+
+# Docker-compose will create this network if it does not already exist.
+networks:
+    dapr-dev-sidecar:
+        name: dapr-dev-sidecar
+
+volumes:
+  daprconfig:
+    
+    
