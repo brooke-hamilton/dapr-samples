@@ -5,7 +5,8 @@
 #   DNS is enabled only on defined networks. All containers in this example must run on the same Docker network.
 # - DNS name lookups in Docker Compose work for the service names and container names. Service name, hostname, and
 #   container name have been set to the same values to avoid confusion, but the host name and container name are not required.
-# - The placement container is not required because the demo code does not use actors, but it is here to show how placement could be configured. 
+# - The placement container is not required because the demo code does not use actors, but it is here to show how placement could be configured.
+# - The Node.js and Python development containers share networking with their Dapr containers. 
 # 
 # To start these containers on your host machine:
 # 1. Ensure that your host machine has docker-compose installed.
@@ -13,6 +14,7 @@
 # 3. Run this command: docker-compose up
 version: '3.8'
 services:
+  # Standalone Redis instance for state storage and pub/sub messaging
   redis-dev:
     image: "redis"
     hostname: redis-dev
@@ -22,6 +24,7 @@ services:
     networks:
       - dapr-dev-sidecar
 
+  # Logs, which are available from the host machine at http://localhost:9411
   zipkin-dev:
     image: "openzipkin/zipkin"
     hostname: zipkin-dev
@@ -31,6 +34,7 @@ services:
     networks:
       - dapr-dev-sidecar
 
+  # Dapr actor placement container, which is not requried for this demo because actors are not used, but here to show how it would be done.
   dapr-placement-dev:
     image: "daprio/dapr"
     hostname: dapr-placement-dev
@@ -40,22 +44,29 @@ services:
     networks:
       - dapr-dev-sidecar
 
+  # VS Code connects to this container for node development
   node-dev:
+    # The build action triggers the container to be built from the Dockerfile in the .devcontainer folder.
     build: 
       context: ./node/.devcontainer
     image: node-dev:latest
-    hostname: node-dev
+    # hostname: not set because this container shares networking with dapr-nodeapp-dev
     container_name: node-dev
+    # This command prevents the container from exiting after it has run, but lets it gracefully respond to a shutdown command.
     command: ["/bin/sh", "-c", "echo Container started ; trap \"exit 0\" 15; while sleep 1 & wait $$!; do :; done"]
     volumes:
       # Mount the root folder containing the git repo. 
       # Make sure the 'workspaceFolder' setting in devcontainer.json is a valid path within this folder.
-      - ../../../:/workspace:cached
-    networks:
-      - dapr-dev-sidecar
+      - ../../:/workspace:cached
+    # Run as a sidecar to the Dapr container. If that container restarts, this one must be restarted too.
+    network_mode: "service:dapr-nodeapp-dev"
+    depends_on: 
+      - dapr-nodeapp-dev
 
+  # Node app development container that runs the daprd process.
   dapr-nodeapp-dev:
     image: "daprio/daprd"
+    hostname: dapr-nodeapp-dev
     container_name: dapr-nodeapp-dev
     entrypoint: "./daprd"
     command: 
@@ -63,29 +74,35 @@ services:
             "-app-id", "nodeapp",
             "-app-port", "3000",
             "-placement-host-address", "dapr-placement-dev:50006",
-            "-components-path", "/banana/components",
-            "-config", "/banana/config.yml"
+            "-components-path", "/daprconfig/components",
+            "-config", "/daprconfig/config.yaml"
      ]
+    # Mount the dapr configuration files under the utils folder.
     volumes:
-      - ./utils/.dapr:/banana
-    network_mode: "service:node-dev"
-    depends_on:
-      - node-dev
-
+      - ./utils/.dapr:/daprconfig
+    networks:
+      - dapr-dev-sidecar
+  
+  # VS code connects to this container for Python app development.
   python-dev:
+    # The build action triggers the container to be built from the Dockerfile in the .devcontainer folder.
     build: 
       context: ./python/.devcontainer
     image: python-dev:latest
-    hostname: python-dev
+    # hostname: not set because this container shares networking with dapr-nodeapp-dev
     container_name: python-dev
+    # This command prevents the container from exiting after it has run, but lets it gracefully respond to a shutdown command.
     command: ["/bin/sh", "-c", "echo Container started ; trap \"exit 0\" 15; while sleep 1 & wait $$!; do :; done"]
     volumes:
       # Mount the root folder containing the git repo. 
       # Make sure the 'workspaceFolder' setting in devcontainer.json is a valid path within this folder.
-      - ../../../:/workspace:cached
-    networks:
-      - dapr-dev-sidecar
+      - ../../:/workspace:cached
+    # Run as a sidecar to the Dapr container. If that container restarts, this one must be restarted too.    
+    network_mode: "service:dapr-python-dev"
+    depends_on: 
+      - dapr-python-dev
 
+  # This container runs the daprd process for the Python app.
   dapr-python-dev:
     image: "daprio/daprd"
     container_name: dapr-python-dev
@@ -94,22 +111,19 @@ services:
     command: 
      [
             "-app-id", "pythonapp",
-            "-placement-host-address", "dapr-placement-dev:50006",
-            "-components-path", "/banana/components",
-            "-config", "/banana/config.yml"
+            "-placement-host-address", "dap-placement-dev:50006",
+            "-components-path", "/daprconfig/components",
+            "-config", "/daprconfig/config.yaml"
      ]
+    # Mount the dapr configuration files under the utils folder.
     volumes:
-      - ./utils/.dapr:/banana
-    network_mode: "service:python-dev"
-    depends_on: 
-      - python-dev
+      - ./utils/.dapr:/daprconfig
+    networks:
+      - dapr-dev-sidecar
+    
 
-# Docker-compose will create this network if it does not already exist.
+# Docker-compose will create this network if it does not already exist. A custom network is required so that
+# Docker will provide DNS name resolution among the containers.
 networks:
     dapr-dev-sidecar:
         name: dapr-dev-sidecar
-
-volumes:
-  daprconfig:
-    
-    

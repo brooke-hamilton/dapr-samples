@@ -21,6 +21,6 @@
 	
 	// Open the sub-folder with the source code, normally a volume mount for the local git repo, defined in the docker-compose.yml file.
 	// This must be a valid path on the container.
-	"workspaceFolder": "/workspace/dapr-samples/vscode-dev-setup/multiple-dev-sidecar/node"
+	"workspaceFolder": "/workspace/vscode-dev-setup/multiple-dev-sidecar/node"
 	
 }
