@@ -94,7 +94,7 @@ See the files in the `.vscode` folder for details on how debugging is configured
 
 Zipkin is running as a container on your host machine, so you can view Zipkin logs in a host machine browser by navigating to [http://localhost:9411](http://localhost:9411).  
 
-Dapr configuration is stored in `.devcontainer/.dapr` so that you can have configuration that is different between a regular deployment and a development container.
+Dapr configuration is stored in `utils/.dapr` so that you can have configuration that is different between a regular deployment and a development container.
 
 ### Run the python app development container
 

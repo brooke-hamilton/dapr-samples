@@ -1,8 +1,10 @@
-# Multiple Development Containers
+# Multiple Sidecar Development Containers
 
 ## Overview
 
-This development environment consists of multiple development containers. Each dev container is specialized for developing and debugging a single app. Other dependencies, including Redis and Dapr services, run in containers on the host machine.
+This development environment consists of multiple development containers. Each dev container is specialized for developing and debugging a single app. The Dapr components - the `daprd` daemon and the Dapr `placement` daemon - run in separate containers. Although it's possible to run the Dapr components within the same containers as the Node.js and Python development containers, this sample demonstrates a simpler debugging configuration for Node.js and Python by running the `daprd` daemons in separate containers.
+
+An important difference between this sample and the other VS Code container samples is that in this sample VS Code attaches to an already running container instead of launching the container from VS Code.
 
 ```ASCII
 Host machine (Windows 10, version 2004, with Docker Desktop)
@@ -17,9 +19,13 @@ Host machine (Windows 10, version 2004, with Docker Desktop)
         |
         -- Dapr zipkin container
         |
-        -- Node app development container, with VS Code attached
+        -- Node.js app development container, with VS Code attached, sidecar to daprd container
         |
-        -- Python app development container, with VS Code attached
+        -- daprd container for the Node.js app
+        |
+        -- Python app development container, with VS Code attached, sidecar to daprd container
+        |
+        -- daprd container for the Python app
 ```
 
 ### Docker Compose
@@ -35,16 +41,36 @@ Your host machine must be running Docker and Docker Compose. This sample was dev
 ### Setup
 
 1. Pull this repository to your host machine.
-1. Open a terminal window, and navigate to the `multiple-dev-container` folder, where you should see a `docker-compose.yml` file.
+1. Open a terminal window, and navigate to the `multiple-dev-sidecar` folder, where you should see a `docker-compose.yml` file.
 1. Run the command `docker-compose up`, which will result in three containers starting:
 
-    - `redis-dev`
-    - `zipkin-dev`
-    - `dapr-placement-dev`
+    - `redis-dev`: standalone Redis instance for state storage and pub/sub messaging
+    - `zipkin-dev`: logs, which are available from the host machine at [http://localhost:9411](http://localhost:9411)
+    - `dapr-placement-dev`: Dapr actor placement container, which is not requried for this demo because actors are not used, but here to show how it would be done
+    - `node-dev`: VS Code connects to this container for Node.js development
+    - `dapr-nodeapp-dev`: container that runs the daprd process for the node-dev container
+    - `python-dev`: VS code connects to this container for Python app development
+    - `dapr-python-dev`: container that runs the daprd process for the python-dev container
 
-   > Note: when you run the `docker-compose up` command, your terminal window will pause until you cancel the command (`Ctrl+c` in BASH), but you can also run the command in the background with the `--detach` parameter, as `docker-compose up --detach`. When you are ready to stop the containers, use `docker-compose stop`. However, it is sometimes useful to view the running console output of `docker-compose`.
+   > Note: when you run the `docker-compose up` command, your terminal window will pause until you cancel the command (`Ctrl+C` in BASH), but you can also run the command in the background with the `--detach` parameter, as `docker-compose up --detach`. When you are ready to stop the containers, use `docker-compose stop`. However, it is sometimes useful to view the running console output of `docker-compose`.
+
+## Step-By-Step
+
+### Start the containers
+
+1. Open a terminal window in WSL, Linux, or PowerShell and navigate to the folder containing this `README.md` file.
+
+2. Run this command to start the containers
+
+    ```BASH
+    docker-compose up
+    ```
+
+You should see the console output of the containers starting.
 
 ### Run the node app development container
+
+1. Open a terminal window in WSL, Linux, or PowerShell and navigate to the folder containing this `README.md` file.
 
 1. Open VS Code to the `multiple-dev-container/node` folder.
 
@@ -55,12 +81,10 @@ Your host machine must be running Docker and Docker Compose. This sample was dev
 1. From the VS Code command palette (Ctrl+Shift+P), run this command:
 
     ```ASCII
-    Remote-Containers: Reopen in Container
+    Remote-Containers: Open Folder in Container...
     ```
 
-    VS Code will build the Docker container and attach to the container. The first time the container is built, this command will take some time to pull the local base image and create the container image. Attaching to the container after the first build will be much faster.
-
-    See the files in the `.devcontainer` folder for how the container is defined and configured.
+    VS Code will prompt you to choose a folder. If you started in the `node` foder, just click OK. If you started in a different folder, navigate to the folder using the VS Code command dialog, then click OK.
 
 1. When VS Code has attached to the running container, you can press `F5` to build and start debugging.
 
@@ -94,7 +118,7 @@ See the files in the `.vscode` folder for details on how debugging is configured
 
 Zipkin is running as a container on your host machine, so you can view Zipkin logs in a host machine browser by navigating to [http://localhost:9411](http://localhost:9411).  
 
-Dapr configuration is stored in `.devcontainer/.dapr` so that you can have configuration that is different between a regular deployment and a development container.
+Dapr configuration is stored in `utils/.dapr` so that you can have configuration that is different between a regular deployment and a development container.
 
 ### Run the python app development container
 
@@ -132,4 +156,3 @@ The python app is run from a separate instance of VS Code.
     Got a new order! Order ID: 3
     Successfully persisted state.
     ```
-    

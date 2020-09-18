@@ -44,7 +44,7 @@ services:
     networks:
       - dapr-dev-sidecar
 
-  # VS Code connects to this container for node development
+  # VS Code connects to this container for Node.js development
   node-dev:
     # The build action triggers the container to be built from the Dockerfile in the .devcontainer folder.
     build: 
@@ -63,7 +63,7 @@ services:
     depends_on: 
       - dapr-nodeapp-dev
 
-  # Node app development container that runs the daprd process.
+  # Container that runs the daprd process for the node-dev container
   dapr-nodeapp-dev:
     image: "daprio/daprd"
     hostname: dapr-nodeapp-dev
@@ -102,7 +102,7 @@ services:
     depends_on: 
       - dapr-python-dev
 
-  # This container runs the daprd process for the Python app.
+  # Container that runs the daprd process for the python-dev container.
   dapr-python-dev:
     image: "daprio/daprd"
     container_name: dapr-python-dev

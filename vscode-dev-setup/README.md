@@ -125,6 +125,14 @@ Install and configure Docker CE.
 
 ## Other Concepts
 
+### About VS Code Remote-Containers Commands
+
+The VS Code command names can be confusing.
+
+- When VS Code is running and has an open folder in the Explorer pane, and the root of that folder contains another folder named `.devcontainer`, this is the VS Code command to launch the specified container and attach to it: `Remote-Containers: Reopen in Container`.
+- When you have a development container already running, perhaps started with Docker, Docker Compose, or Kubernetes, and you have VS Code running with an open folder in the Explorer pane, and you have configuration for that container within a `.devcontainer` folder, the command to run is: `Remote-Containers: Open Folder in Container...`, which attaches the current instance of VS Code to a running container, specified in the `.devcontainer/devcontainer.json` file.
+- An additional VS Code command called `Remote-Containers: Attach to Running Container...` is available. That command is used for attaching to running containers without applying configuration specified in the `devcontainer.json` file.
+
 ### Start a BASH shell instance within a development container
 
 When an instance of VS Code is attached to a running container, there are two options for launching a BASH shell:
