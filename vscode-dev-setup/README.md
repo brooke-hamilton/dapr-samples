@@ -4,7 +4,8 @@
 
 | Attribute | Details |
 |--------|--------|
-| Dapr runtime version | v0.10 |
+| Dapr runtime version | v0.11 |
+| docker compose version | 1.27.4 |
 | Language | Javascript, Python |
 | Environment | Local |
 
@@ -18,7 +19,7 @@ The goal of all development environment setup is to make developer adoption as s
 
 Dapr provides a simple way to develop an application built from a single component: install Dapr and your development tools on a machine (physical machine, virtual machine, or container), then debug the application using the Dapr CLI.
 
-If your application is composed of multiple components, especially when multiple platforms and languages are required, then additional setup is needed in order to debug the whole application. For example, if a web application written in node.js is posting messages to Dapr's pub/sub servce, and a separate Python app is processing those messages, you will have to run and debug two separate components. Depending on your application, putting all frameworks and tools on a single development machine may make sense, or you may need to separate each component onto it's own isolated development machine.
+If your application is composed of multiple components, especially when multiple platforms and languages are required, then additional setup is needed in order to debug the whole application. For example, if a web application written in Node.js is posting messages to Dapr's pub/sub service, and a separate Python app is processing those messages, you will have to run and debug two separate components. Depending on your application, putting all frameworks and tools on a single development machine may make sense, or you may need to separate each component onto its own isolated development machine.
 
 ### Development Containers
 
@@ -30,7 +31,7 @@ For more information, see the VS Code documentation on [developing inside a cont
 
 ### Single Development Container
 
-This diagram shows a host machine with a single development container, with other containers on the host machine for Dapr placement, Redis, and Dapr metrics (zipkin). The Docker network and the containers for Dapr, Redis, and Zipkin are created using Docker Compose. This development machine configuration may be convenient if all applictions use the same platform technologies. This configuration is not good for applications that use many different platforms and is especially poor for applications in which individual components need to use different versions of a platform.
+This diagram shows a host machine with a single development container, with other containers on the host machine for Dapr placement, Redis, and Dapr metrics (zipkin). The Docker network and the containers for Dapr, Redis, and Zipkin are created using Docker Compose. This development machine configuration may be convenient if all applications use the same platform technologies. This configuration is not good for applications that use many different platforms and is especially poor for applications in which individual components need to use different versions of a platform.
 
 ```ASCII
 Host machine (Windows 10, version 2004, with Docker Desktop)
@@ -132,6 +133,10 @@ The VS Code command names can be confusing.
 - When VS Code is running and has an open folder in the Explorer pane, and the root of that folder contains another folder named `.devcontainer`, this is the VS Code command to launch the specified container and attach to it: `Remote-Containers: Reopen in Container`.
 - When you have a development container already running, perhaps started with Docker, Docker Compose, or Kubernetes, and you have VS Code running with an open folder in the Explorer pane, and you have configuration for that container within a `.devcontainer` folder, the command to run is: `Remote-Containers: Open Folder in Container...`, which attaches the current instance of VS Code to a running container, specified in the `.devcontainer/devcontainer.json` file.
 - An additional VS Code command called `Remote-Containers: Attach to Running Container...` is available. That command is used for attaching to running containers without applying configuration specified in the `devcontainer.json` file.
+
+### Rebuild a development container from VS Code
+
+When running a development container on a host machine, sometimes the container image will need to be rebuilt, like when new versions of dependencies are released. You can rebuild the container by removing the Docker container image from your machine, which will force a rebuild the next time you run the development container. Or you can run this command from the VS Code command palette: `Remote-Containers: Rebuild and Reopen in Container`.
 
 ### Start a BASH shell instance within a development container
 
