@@ -36,7 +36,7 @@ The custom Docker network and the containers for Dapr, Redis, and Zipkin are def
 
 ### Prerequisites
 
-Your host machine must be running Docker and Docker Compose. This sample was developed with Docker Compose version 1.26.2.
+Your host machine must be running Docker and Docker Compose.
 
 ### Setup
 

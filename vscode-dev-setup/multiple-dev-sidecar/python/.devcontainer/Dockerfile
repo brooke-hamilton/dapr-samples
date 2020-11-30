@@ -10,11 +10,6 @@ RUN apt-get update \
     && pip3 install --upgrade pip \
     && pip3 install pylint requests
  
-# Install Dapr CLI and init without docker (option "--slim")
-RUN curl -sL https://raw.githubusercontent.com/dapr/cli/master/install/install.sh | bash - 
-RUN dapr init --slim
-ENV PATH=$PATH:/root/.dapr/bin
-
 # Reset to the default value
 ENV DEBIAN_FRONTEND=dialog
 
